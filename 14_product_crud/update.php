@@ -10,17 +10,17 @@ $id = $_GET['id'] ?? null;
 
 
 //if id does not exist redirect to index.php
-if(!$id){
+if (!$id) {
     header('Location: index.php');
     exit;
 }
 
 $statements = $pdo->prepare('SELECT * FROM products WHERE id =:id');
-$statements -> bindValue(':id',$id);
+$statements->bindValue(':id', $id);
 $statements->execute();
 
 
-$product =$statements->fetch(PDO::FETCH_ASSOC);
+$product = $statements->fetch(PDO::FETCH_ASSOC);
 
 // echo '<pre>';
 // var_dump($product);
@@ -64,37 +64,39 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         //check if images folder exist
         $image = $_FILES['image'] ?? null;
-        $imagePath = '';
 
-        //delete old image and create a new file path
-        if ($product['image']) {
-            #remove images
-            unlink($product['image']);
-        }
+        // old image path
+        $imagePath = $product['image'];
 
 
+        if ($image && $image['tmp_name']) {
 
-        if ($image) {
+            //delete old image if there is an old image
+            if ($product['image']) {
+                #remove images
+                unlink($product['image']);
+            }
+
             //create a unique path for images
             $imagePath = 'images/' . randomString(8) . '/' . $image['name'];
-            
+
             mkdir(dirname($imagePath));
 
             move_uploaded_file($image['tmp_name'], $imagePath);
         }
 
-        
 
 
-        $statements = $pdo->prepare("INSERT INTO products(title, image, description, price, create_date) 
-        VALUES(:title, :image,:description,:price,:date)");
+
+        $statements = $pdo->prepare("UPDATE products SET title =:title, image = :image , description = :description, price = :price where id = :id ");
 
         //bind parameters from sql statements
         $statements->bindValue(':title', $title);
         $statements->bindValue(':image', $imagePath);
         $statements->bindValue(':description', $description);
         $statements->bindValue(':price', $price);
-        $statements->bindValue(':date', $date);
+        $statements->bindValue(':id', $id);
+
 
         $statements->execute();
         // after create new product, come back to main page index php
@@ -130,9 +132,10 @@ function randomString($n)
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">    <link rel="stylesheet" href="app.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link rel="stylesheet" href="app.css">
 
-    <link href="app.css" rel="stylesheet"/>
+    <link href="app.css" rel="stylesheet" />
 
     <title>Products CRUD</title>
 </head>
@@ -142,7 +145,8 @@ function randomString($n)
     <p>
         <a href="index.php" class="btn btn-secondary">Go Back to Products</a>
     </p>
-    <h1>Update Prodcuct<h1>
+    <h1>Update Prodcuct <b><?php echo $product['title'] ?></b>
+        <h1>
 
             <?php if (!empty($errors)) : ?>
                 <div class="alert alert-danger">
@@ -155,13 +159,14 @@ function randomString($n)
 
 
             <form action="" method="post" enctype="multipart/form-data">
-               <?php if($product['image']):  ?>
-                <img src="<?php echo $product['image'] ?>" class="update-image">
+                <!-- if product have image display image -->
+                <?php if ($product['image']) :  ?>
+                    <img src="<?php echo $product['image'] ?>" class="update-image" alt="images">
                 <?php endif; ?>
-            
-            
-            
-            <div class="form-group">
+
+
+
+                <div class="form-group">
                     <label>Product Image</label>
                     <br>
                     <input type="file" name="image" class="form-control">
@@ -185,10 +190,3 @@ function randomString($n)
 </body>
 
 </html>
-
-
-
-
-
-
-
