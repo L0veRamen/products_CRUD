@@ -1,0 +1,15 @@
+body {
+    padding: 50px;
+}
+
+html {
+    font-size: 1rem;
+}
+
+.thumb-image {
+    width: 50px;
+}
+
+.update-image {
+    width: 120px;
+}
